@@ -40,8 +40,6 @@ class KernelWorkflowRegressionTests(unittest.TestCase):
         expected = {
             "OFFICIAL_DEV_REF": "08a3b087e49227c8a6731c5f1114998b5e25255b",
             "SUKISU_DEV_REF": "cf87e3f4ddd3f6e5464d85acf56aaa6950e70841",
-            # Baka-SU/BakaSU ships no dev branch, so Dev collapses onto the same main HEAD as Stable.
-            "BAKASU_DEV_REF": "9dbce02e511ea6b6305a238b84e456f6a92e1d0b",
         }
         for variable, sha in expected.items():
             with self.subTest(variable=variable):
@@ -49,6 +47,22 @@ class KernelWorkflowRegressionTests(unittest.TestCase):
                     self.ref_script,
                     rf'(?m)^{variable}="{sha}"$',
                 )
+
+        # Dev/Stable 会随上游漂移；这里只保证两者同步且是完整 SHA，
+        # 避免每次维护钉版都要改测试。
+        for variable in ("BAKASU_STABLE_REF", "BAKASU_DEV_REF"):
+            with self.subTest(variable=variable):
+                self.assertRegex(
+                    self.ref_script,
+                    rf'(?m)^{variable}="[0-9a-f]{{40}}"(?:\s|$)',
+                )
+
+        # Baka-SU/BakaSU ships no dev branch, so Dev collapses onto the same main HEAD as Stable.
+        stable = re.search(r'(?m)^BAKASU_STABLE_REF="([0-9a-f]{40})"', self.ref_script)
+        dev = re.search(r'(?m)^BAKASU_DEV_REF="([0-9a-f]{40})"', self.ref_script)
+        self.assertIsNotNone(stable)
+        self.assertIsNotNone(dev)
+        self.assertEqual(stable.group(1), dev.group(1))
 
     def test_resolved_sha_defaults_to_selected_variant_ref(self):
         self.assertIn(
