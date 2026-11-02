@@ -1803,9 +1803,23 @@ jobs:
                       raise SystemExit(f"{kernel_dir} missing selinux/rules.c")
                   if not selinux_c.exists():
                       raise SystemExit(f"{kernel_dir} missing selinux/selinux.c")
-                  patch_bakasu_selinux_hide(selinux_hide_c)
-                  patch_bakasu_rules(rules_c)
-                  patch_bakasu_selinux(selinux_c)
+                  # BakaSU >= 2026-10-24 自己已把 selinux_hide 的全局量改成 __maybe_static：
+                  # 内核树里出现 SUSFS 的 selinux_hide manual hook 时
+                  # (tools/susfs_compat.mk -> KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE)
+                  # 会自动导出，fake_state / backup_sepolicy 等 anchor 也随之变化。
+                  # 这种上游新布局无需下面那套旧版改写（硬套反而会因 anchor 缺失中断），
+                  # 只在 2026-10-05 及更早的旧布局上执行。
+                  hide_text = selinux_hide_c.read_text()
+                  upstream_layout = (
+                      "__maybe_static" in hide_text
+                      and re.search(r"(?m)^__maybe_static\s+ssize_t\s+my_write_context\s*\(", hide_text) is not None
+                  )
+                  if upstream_layout:
+                      print(f"检测到上游新版 selinux_hide 布局，跳过旧版 BakaSU SELinux 改写: {selinux_hide_c}")
+                  else:
+                      patch_bakasu_selinux_hide(selinux_hide_c)
+                      patch_bakasu_rules(rules_c)
+                      patch_bakasu_selinux(selinux_c)
 
               sucompat_c = kernel_dir / "feature/sucompat.c"
               if sucompat_c.exists():

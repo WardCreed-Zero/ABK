@@ -193,9 +193,18 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 # (见 build.yml)。刷新时用一次全矩阵 dispatch 验证。
 #
 # 2026-10-05: ReSukiSU/ReSukiSU 上游改名 Baka-SU/BakaSU（同一仓库，未 fork），变体名随之
-# 改为 BakaSU；上游没有 dev 分支，故 BAKASU 的 Stable 与 Dev 同钉 main HEAD
-# 9dbce02e511ea6b6305a238b84e456f6a92e1d0b。旧 SHA 94dd3c93 在改名后的仓库里仍可达，必要时
-# 可作为回退基线。
+# 改为 BakaSU；上游没有 dev 分支，故 BAKASU 的 Stable 与 Dev 同钉 main HEAD。旧 SHA 94dd3c93
+# 在改名后的仓库里仍可达，必要时可作为回退基线。
+#
+# 2026-11-02: BAKASU 由 9dbce02e (2026-10-05) 抬到 516d3e87 (2026-10-31 main HEAD)。
+# susfs4ksu 自 2026-10-19/10-24 起删掉了自己在 KernelSU 侧的实现，改为复用上游 KernelSU 的
+# module preinit 与 selinux_hide（"Reuse upstream selinux_hide existing code" /
+# "Sync with the official KernelSU main repo"），内核侧 50_add_susfs_in_gki-*.patch 因此直接
+# extern 引用 ksu_setup_preinit_file / ksu_preinit_handle_post_execveat / my_write_context /
+# my_write_access / my_setprocattr。9dbce02e 早于 BakaSU 加 preinit (2026-10-16)、也早于把
+# my_* 改成 __maybe_static 导出 (2026-10-24)，链接期必然 undefined symbol；516d3e87 两个缺口
+# 都已具备，且 main 上有成功的 build-manager run (41207077584)，manager APK 仍按
+# Manager-release 取得到。
 #
 # 2026-09-30: 按用户要求 Stable 与 Dev 均钉到各上游 main 的最新 commit（"都最新"），用一次
 # 全矩阵编译确认当前上游能否直接编过。注意：本仓 6 月的兼容 shim (.github/scripts/
@@ -204,14 +213,14 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 # 把下面三行 STABLE 改回 v3.2.5=b0bc817b… 系列，并将 config/config 的 custom 改回 true。
 OFFICIAL_STABLE_REF="08a3b087e49227c8a6731c5f1114998b5e25255b"  # tiann/KernelSU main HEAD (2026-09-30)
 SUKISU_STABLE_REF="cf87e3f4ddd3f6e5464d85acf56aaa6950e70841"    # SukiSU-Ultra main HEAD (2026-09-30)
-BAKASU_STABLE_REF="9dbce02e511ea6b6305a238b84e456f6a92e1d0b"  # Baka-SU/BakaSU main HEAD (2026-10-05)
+BAKASU_STABLE_REF="516d3e87fbc986ccefdde2c2765f1700612441a9"  # Baka-SU/BakaSU main HEAD (2026-10-31), 需 preinit + selinux_hide 导出
 
 # Dev = 开发层，同为静态钉版；当前与 Stable 同步钉到最新 commit（"都最新"）。
 # Baka-SU/BakaSU 没有 dev 分支（只有 main 与若干 feature 分支），故 BAKASU_DEV_REF 与
 # BAKASU_STABLE_REF 指向同一个 main HEAD；其他变体若有 dev 分支仍可各自独立钉版。
 OFFICIAL_DEV_REF="08a3b087e49227c8a6731c5f1114998b5e25255b"
 SUKISU_DEV_REF="cf87e3f4ddd3f6e5464d85acf56aaa6950e70841"
-BAKASU_DEV_REF="9dbce02e511ea6b6305a238b84e456f6a92e1d0b"
+BAKASU_DEV_REF="516d3e87fbc986ccefdde2c2765f1700612441a9"
 
 # Latest = 最新层，动态追踪各上游 main 的最新（有成功 build-manager/Release run 的）commit。
 # 解析逻辑见 resolve_tracking / ksu_resolve_branch_sha。
