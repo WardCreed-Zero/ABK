@@ -2907,6 +2907,9 @@ jobs:
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
           set -euo pipefail
+          if [ "${{ inputs.ksu_variant }}" = "BakaSU" ]; then
+            echo "::warning::BakaSU 上游已于 2026-06 移除 KPM 内核实现；本步骤只会打 KernelPatch 二进制补丁，管理器侧没有 KPM 管理界面。"
+          fi
           KSU_KERNEL_DIR=""
           for dir in ./common/drivers/kernelsu ./drivers/kernelsu ./KernelSU/kernel ./kernel; do
             if [ -f "$dir/Kconfig" ]; then

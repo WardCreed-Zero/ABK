@@ -279,6 +279,12 @@ jobs:
           path: |
             **/*.apk
 
+      - name: 校验管理器产物
+        if: inputs.kernelsu_variant != 'None' && steps.add_KSU.outcome != 'success'
+        run: |
+          echo "::error::未获取到 ${{ inputs.kernelsu_variant }} 管理器 APK；构建流程仍会继续，但本次产物不完整（详见「添加 KernelSU」步骤日志）。"
+          exit 1
+
       - name: 上传SUSFS模块
         if: steps.add_SUSFS.outcome == 'success'
         uses: actions/upload-artifact@v6
