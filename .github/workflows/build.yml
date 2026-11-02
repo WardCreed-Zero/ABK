@@ -2074,6 +2074,19 @@ jobs:
           cd $KERNEL_ROOT/common
           patch -p1 < "50_add_susfs_in_gki-${ABK_ANDROID_VERSION}-${ABK_KERNEL_VERSION}.patch" || true
 
+          # SUSFS 2026-11-01 起新增 priority uid filter：调用点包在
+          # CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER 里，但两个 helper 本身没有 guard。
+          # ABK 不启用该功能，GKI 的 -Werror=unused-function 会直接把 fs/susfs.c 判死。
+          # 用 __maybe_unused 标注：功能开启时仍正常调用，关闭时只是不再报 unused。
+          SUSFS_CORE="./fs/susfs.c"
+          if [ -f "$SUSFS_CORE" ]; then
+            sed -i 's/^static struct cred \*susfs_switch_to_ksu_domain(void) {/static struct cred *__maybe_unused susfs_switch_to_ksu_domain(void) {/' "$SUSFS_CORE"
+            sed -i 's/^static void susfs_restore_creds(struct cred \*orig_cred) {/static void __maybe_unused susfs_restore_creds(struct cred *orig_cred) {/' "$SUSFS_CORE"
+            if grep -q "__maybe_unused susfs_switch_to_ksu_domain" "$SUSFS_CORE"; then
+              echo "已将 SUSFS priority uid filter 的 helper 标记为 __maybe_unused（该功能未启用）"
+            fi
+          fi
+
           if [ "$ABK_KSU_VARIANT" == "SukiSU" ] || [ "$ABK_KSU_VARIANT" == "BakaSU" ]; then
             SUSFS_C="./fs/susfs.c"
             if [ -f "$SUSFS_C" ] && grep -q '^static void susfs_run_sus_path_loop(' "$SUSFS_C"; then
