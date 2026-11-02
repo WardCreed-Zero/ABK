@@ -494,13 +494,23 @@ jobs:
             branch_input="Stable(标准)"
           fi
 
-          # 与 .github/scripts/resolve-ksu-ref.sh 的 Stable 层保持一致：同一 commit 在
-          # 两处独立维护，漂移会让 App 构建与发布链路编出不同的内核管理器。
-          OFFICIAL_STABLE_REF="08a3b087e49227c8a6731c5f1114998b5e25255b"
-          SUKISU_STABLE_REF="cf87e3f4ddd3f6e5464d85acf56aaa6950e70841"
+          # 直接读取 .github/scripts/resolve-ksu-ref.sh 里的 Stable 钉版，避免两处独立维护
+          # 导致发布说明/产物指向不同 commit（历史上 BakaSU 抬版时这里就漂过）。
+          REF_SCRIPT="$GITHUB_WORKSPACE/.github/scripts/resolve-ksu-ref.sh"
+          read_pin() {
+            sed -n "s/^$1=\"\([0-9a-f]\{40\}\)\".*/\1/p" "$REF_SCRIPT" | head -n 1
+          }
+          OFFICIAL_STABLE_REF="$(read_pin OFFICIAL_STABLE_REF)"
+          SUKISU_STABLE_REF="$(read_pin SUKISU_STABLE_REF)"
+          BAKASU_STABLE_REF="$(read_pin BAKASU_STABLE_REF)"
+          for pin in "$OFFICIAL_STABLE_REF" "$SUKISU_STABLE_REF" "$BAKASU_STABLE_REF"; do
+            if [ -z "$pin" ]; then
+              echo "::error::无法从 resolve-ksu-ref.sh 读取 Stable 钉版 SHA" >&2
+              exit 1
+            fi
+          done
           # Baka-SU/BakaSU 上游（2026-09 由 ReSukiSU/ReSukiSU 改名而来）没有 dev 分支，
           # 故 BAKASU_DEV_REF 直接继承 BAKASU_STABLE_REF，两者同为 main HEAD。
-          BAKASU_STABLE_REF="9dbce02e511ea6b6305a238b84e456f6a92e1d0b"
 
           OFFICIAL_DEV_REF="$OFFICIAL_STABLE_REF"
           SUKISU_DEV_REF="$SUKISU_STABLE_REF"

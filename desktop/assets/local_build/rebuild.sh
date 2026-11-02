@@ -290,9 +290,9 @@ resolve_ksu_ref() {
         SukiSU:'Stable(标准)') printf '%s\n' 'cf87e3f4ddd3f6e5464d85acf56aaa6950e70841' ;;
         SukiSU:'Dev(开发)') printf '%s\n' 'cf87e3f4ddd3f6e5464d85acf56aaa6950e70841' ;;
         # Baka-SU/BakaSU 上游没有 dev 分支（只有 main 与若干 feature 分支），故 Stable 与 Dev
-        # 同钉 main HEAD 9dbce02e；旧 SHA b6706363/fb771414 在改名后的仓库里仍可达，可作回退。
-        BakaSU:'Stable(标准)') printf '%s\n' '9dbce02e511ea6b6305a238b84e456f6a92e1d0b' ;;
-        BakaSU:'Dev(开发)') printf '%s\n' '9dbce02e511ea6b6305a238b84e456f6a92e1d0b' ;;
+        # 同钉 main HEAD 516d3e87（2026-10-31）；旧 SHA 9dbce02e/b6706363/fb771414 仍可达，可作回退。
+        BakaSU:'Stable(标准)') printf '%s\n' '516d3e87fbc986ccefdde2c2765f1700612441a9' ;;
+        BakaSU:'Dev(开发)') printf '%s\n' '516d3e87fbc986ccefdde2c2765f1700612441a9' ;;
         None:'Stable(标准)'|None:'Dev(开发)'|None:'Custom(自定义)') printf '%s\n' '' ;;
         *:'Custom(自定义)')
             [[ -n "$KSU_CUSTOM_REF" ]] || log_error "KSU_CUSTOM_REF must be set when KSU_TRACK=Custom(自定义)"
