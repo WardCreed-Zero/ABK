@@ -741,23 +741,16 @@ void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr)
 '''
         text = text.replace(marker, block + marker, 1)
 
-    old_stop_input = r'''void ksu_stop_input_hook_runtime(void)
-{
-    static bool input_hook_stopped = false;
-    if (input_hook_stopped) {
-        return;
-    }
-    input_hook_stopped = true;
+    # 上游 2026-10 之后 (SukiSU-Ultra b34a3c98) 精简了 ksu_stop_input_hook_runtime：
+    # schedule_work() 的返回值日志被去掉，整段匹配会 miss。两种写法都接受，注入内容不变
+    # （关闭 SUSFS 内联 hook 时同步关掉 static key）。
+    stop_input_variants = (
+        (
+            r'''    input_hook_stopped = true;
     bool ret = schedule_work(&stop_input_hook_work);
     pr_info("unregister input kprobe: %d!\n", ret);
-}'''
-    new_stop_input = r'''void ksu_stop_input_hook_runtime(void)
-{
-    static bool input_hook_stopped = false;
-    if (input_hook_stopped) {
-        return;
-    }
-    input_hook_stopped = true;
+}''',
+            r'''    input_hook_stopped = true;
 #ifdef CONFIG_KSU_SUSFS
     if (static_key_enabled(&ksu_is_input_hook_enabled)) {
         static_branch_disable(&ksu_is_input_hook_enabled);
@@ -766,14 +759,30 @@ void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr)
 #endif
     bool ret = schedule_work(&stop_input_hook_work);
     pr_info("unregister input kprobe: %d!\n", ret);
-}'''
-    text = replace_or_confirm(
-        text,
-        old_stop_input,
-        new_stop_input,
-        "ksu input inline hook disabled",
-        "ksu_stop_input_hook_runtime",
+}''',
+        ),
+        (
+            r'''    input_hook_stopped = true;
+    schedule_work(&stop_input_hook_work);
+}''',
+            r'''    input_hook_stopped = true;
+#ifdef CONFIG_KSU_SUSFS
+    if (static_key_enabled(&ksu_is_input_hook_enabled)) {
+        static_branch_disable(&ksu_is_input_hook_enabled);
+        pr_info("ksu input inline hook disabled\n");
+    }
+#endif
+    schedule_work(&stop_input_hook_work);
+}''',
+        ),
     )
+    if "ksu input inline hook disabled" not in text:
+        for variant_old, variant_new in stop_input_variants:
+            if variant_old in text:
+                text = text.replace(variant_old, variant_new, 1)
+                break
+        else:
+            die(f"missing ksu_stop_input_hook_runtime: {path}")
 
     old_init = r'''void __init ksu_ksud_init()
 {

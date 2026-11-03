@@ -287,8 +287,9 @@ resolve_ksu_ref() {
         # 独立维护，漂移会让本地构建与 CI 编出不同的内核管理器。
         Official:'Stable(标准)') printf '%s\n' '08a3b087e49227c8a6731c5f1114998b5e25255b' ;;
         Official:'Dev(开发)') printf '%s\n' '08a3b087e49227c8a6731c5f1114998b5e25255b' ;;
-        SukiSU:'Stable(标准)') printf '%s\n' 'cf87e3f4ddd3f6e5464d85acf56aaa6950e70841' ;;
-        SukiSU:'Dev(开发)') printf '%s\n' 'cf87e3f4ddd3f6e5464d85acf56aaa6950e70841' ;;
+        # SukiSU 2026-11-03 抬到 b34a3c98（上游 main HEAD）；新版源码锚点见 fix_sukisu_susfs.py。
+        SukiSU:'Stable(标准)') printf '%s\n' 'b34a3c98b027c21e1e12aee21122b9115657296e' ;;
+        SukiSU:'Dev(开发)') printf '%s\n' 'b34a3c98b027c21e1e12aee21122b9115657296e' ;;
         # Baka-SU/BakaSU 上游没有 dev 分支（只有 main 与若干 feature 分支），故 Stable 与 Dev
         # 同钉 main HEAD 516d3e87（2026-10-31）；旧 SHA 9dbce02e/b6706363/fb771414 仍可达，可作回退。
         BakaSU:'Stable(标准)') printf '%s\n' '516d3e87fbc986ccefdde2c2765f1700612441a9' ;;

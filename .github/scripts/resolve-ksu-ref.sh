@@ -211,15 +211,23 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 # ensure-ksu-compat.py + build.yml) 与 SUSFS 补丁仍针对 v3.2.x API，与最新 KSU 大概率不匹配
 # (12 处 -Werror + patch reject)，需后续更新补丁"再修"。若全编译失败、需回退到可编译基线，
 # 把下面三行 STABLE 改回 v3.2.5=b0bc817b… 系列，并将 config/config 的 custom 改回 true。
+# 2026-11-03: SUKISU 由 cf87e3f4 (2026-09-21) 抬到 b34a3c98 (2026-11-03 main HEAD)。
+# 上游 10 月这波改动很大：kernel/preinit/ 落地（SUSFS GKI 补丁要的 preinit 后端改由上游提供）、
+# kernel/kpm/ 换成 kernel/extension/、supercall/dispatch.c 重写、supercall/selinux_hide 导出调整。
+# 因此 b34a3c98 上的内核源码与 cf87e3f4 的补丁锚点不再逐字相同，本仓同步做了两处适配：
+#   1) .github/scripts/fix_sukisu_susfs.py 的 ksu_stop_input_hook_runtime 锚点改为同时接受
+#      旧版（schedule_work 返回值打日志）与新版（2026-10 起删掉该日志）两种写法；
+#   2) 抬版后跑一次全矩阵 dispatch 验证 SUSFS 侧仍能编过。
+# 选取依据：b34a3c98 在 main 上有成功的 build-manager run（41590963923），manager APK 取得到。
 OFFICIAL_STABLE_REF="08a3b087e49227c8a6731c5f1114998b5e25255b"  # tiann/KernelSU main HEAD (2026-09-30)
-SUKISU_STABLE_REF="cf87e3f4ddd3f6e5464d85acf56aaa6950e70841"    # SukiSU-Ultra main HEAD (2026-09-30)
+SUKISU_STABLE_REF="b34a3c98b027c21e1e12aee21122b9115657296e"    # SukiSU-Ultra main HEAD (2026-11-03), 需新版 fix_sukisu_susfs.py 锚点
 BAKASU_STABLE_REF="516d3e87fbc986ccefdde2c2765f1700612441a9"  # Baka-SU/BakaSU main HEAD (2026-10-31), 需 preinit + selinux_hide 导出
 
 # Dev = 开发层，同为静态钉版；当前与 Stable 同步钉到最新 commit（"都最新"）。
 # Baka-SU/BakaSU 没有 dev 分支（只有 main 与若干 feature 分支），故 BAKASU_DEV_REF 与
 # BAKASU_STABLE_REF 指向同一个 main HEAD；其他变体若有 dev 分支仍可各自独立钉版。
 OFFICIAL_DEV_REF="08a3b087e49227c8a6731c5f1114998b5e25255b"
-SUKISU_DEV_REF="cf87e3f4ddd3f6e5464d85acf56aaa6950e70841"
+SUKISU_DEV_REF="b34a3c98b027c21e1e12aee21122b9115657296e"
 BAKASU_DEV_REF="516d3e87fbc986ccefdde2c2765f1700612441a9"
 
 # Latest = 最新层，动态追踪各上游 main 的最新（有成功 build-manager/Release run 的）commit。
